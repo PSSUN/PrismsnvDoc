@@ -53,12 +53,23 @@ If you do not have a specific reason to tune these parameters, it is recommended
 | Parameter | Default | Description |
 |---|---|---|
 | `output_dir` | required | Output root directory |
-| `percentage` | 20 | VCF AF filter threshold (`AF < percentage` is kept) |
-| `threads` | user-defined | Parallel worker count |
-| `data_type` | `sc` | `sc` or `spatial` |
+| `percentage` | required; example: 20 | Keep ALT alleles with sample frequency strictly below this percentage (20 means 20%) |
+| `threads` | required | Positive integer parallel worker count |
+| `data_type` | required; example: `sc` | `sc` or `spatial` |
 | `count_unit` | `reads` | `reads` or `umis` |
 
 If `percentage <= 0`, VCF records are copied without AF filtering.
+
+For positive thresholds, frequency is read from the **first sample column** of
+each sample-level VCF: per-ALT FORMAT `FREQ` (percentage) takes precedence, with
+FORMAT `AD/DP` as fallback. Standard `AD` is REF followed by each ALT count;
+scalar `AD` is accepted for a single VarScan ALT. INFO `AF` is not used for this
+sample-frequency filter. Missing or unparseable frequencies are excluded.
+
+For multiallelic records, the intermediate VCF retains the complete record if
+any ALT passes; automatic union construction then splits the ALT alleles and
+applies the threshold to each allele independently. Population AF filtering
+below is a separate operation using the configured INFO field.
 
 ### 3.2 Pileup Quality Filters
 
@@ -118,17 +129,21 @@ If `af_filter_enabled: true`, each sample must also provide:
 - `auto`: build `SNV_union.tsv` from filtered per-sample VCF files.
 - custom path: use external SNV union file (frequency annotations may be missing).
 
+The union is a headerless, tab-delimited file with four columns: chromosome,
+1-based position, REF, and a single ALT per row. A custom union defines the
+sites directly; it bypasses automatic per-ALT union selection.
+
 ---
 
 ## 5. Barcode Input Formats
 
 ### 5.1 Single-cell (`data_type: sc`)
 
-- One-column barcode file.
+- Headerless, one-column barcode file.
 
 ### 5.2 Spatial (`data_type: spatial`)
 
-- Six columns: `barcode, in_tissue, x, y, px, py`
+- Headerless CSV with six columns: `barcode, in_tissue, x, y, px, py`
 - Only rows with `in_tissue == 1` are used.
 
 ---
@@ -148,7 +163,7 @@ Additional behavior:
 
 - Loci with pileup depth `> 50000` are skipped.
 - ALT/REF counts support either read-level or UMI-level aggregation.
-- During merge, barcode IDs are prefixed with sample name to avoid collisions.
+- During merge, barcode IDs become `<sample_name>_<barcode>` and `obs["sample"]` stores the sample name. RNA AnnData cell IDs must match these IDs for downstream alignment.
 
 ---
 
@@ -180,6 +195,10 @@ Global outputs:
 Optional global AF-filtered output:
 
 - `all_samples_merged_barcode_snv_matrix_af_filtered.h5ad`
+
+The ordinary merged matrix remains unfiltered by population AF. To train on
+the population-filtered matrix, explicitly set `snv_eff.adata_snv` to
+`all_samples_merged_barcode_snv_matrix_af_filtered.h5ad`.
 
 ---
 
@@ -217,3 +236,11 @@ Validation includes:
 If `af_filter_enabled=true` and `af_field` is absent in VCF INFO, a `KeyError` is raised.
 
 Recommendation: validate with one sample first, then scale up.
+
+### 9.4 Reusing Outputs After a Configuration or Version Change
+
+Several intermediate files and per-sample matrices are reused based on file
+existence, without validating their inputs or parameters. Use a fresh
+`settings.output_dir` after changing VCFs, the union, filtering/counting
+settings, or upgrading from older multiallelic handling. Regenerating only the
+union does not refresh cached count files and matrices.

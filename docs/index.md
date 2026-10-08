@@ -1,5 +1,9 @@
 # PrismSNV User Documentation
 
+These pages describe the current PrismSNV 0.1.0 source checkout (reviewed on
+2026-10-08), which requires Python 3.12+ and bundles VarScan v2.4.6. Changes in
+the checkout may precede a published release with the same package version.
+
 This documentation describes the complete PrismSNV pipeline:
 **BAM-to-VCF Calling → SNV-to-Barcode Matrix Construction → RNA Backbone Pretraining → SNV Perturbation Modeling**.
 

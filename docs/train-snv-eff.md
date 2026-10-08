@@ -52,6 +52,11 @@ snv_eff:
 
 ### 2.1 Required Fields
 
+The example uses values from the packaged template. Omitted keys can have
+different CLI defaults; for example, `min_cnt` defaults to 100,
+`batch_size_train` to 256, `num_epochs` to 500, `top_k_attention` to 2000, and
+`attn_batch` to 256. Use `prismsnv get_template` to make choices explicit.
+
 - `snv_eff.adata_snv`
 
 `snv_eff.ann_csv` is optional. If omitted, scoring still runs and annotation metadata columns in the score CSVs are left empty.
@@ -100,20 +105,44 @@ Both `delta_ratio_*` terms constrain how far a single SNV may push a cell's late
 
 ## 3. Internal Stages
 
-1. Load and filter SNV matrix (`min_cnt`); `n_top` only controls the top-SNV diagnostic stacked-bar plot.
-2. Build `SNVPerturbationModel` (SNV embedding + attention + conditional perturbation).
+1. Load and filter SNV matrix (`min_cnt`) and retain standard chromosomes; `n_top` only controls the top-SNV diagnostic stacked-bar plot.
+2. Build `SNVPerturbationModel` (SNV embeddings + independent sigmoid gates + conditional perturbation).
 3. Optionally load pretrained backbone weights.
 4. Train and save model checkpoint.
-5. Export attention ranking, cell-level scores, cell-type-level scores, and plots.
+5. Export latent-contribution ranking, cell-level scores, cell-type-level scores, and plots.
 
 Additional notes:
 
-- If `freeze_backbone=true`, encoder-side parameters are frozen while SNV-related components remain trainable.
-- If `eval_only=true`, `snv_perturbation_model.pt` must already exist.
+- When a pretrained backbone is loaded, `freeze_backbone: true` freezes encoder-side parameters while SNV-related components remain trainable. The alias `freeze_encoder` takes precedence if both keys are set.
+- If `eval_only=true`, a compatible versioned `snv_perturbation_model.pt` must already exist; see the evaluation contract below.
 - RNA input is auto-loaded from `result_folder/finetune_aligned.h5ad`.
+- Training auto-detects `result_folder/rna_backbone_pretrained.pt`; when present, its `.genes.npy` sidecar is required to verify RNA feature order. Keep both pretraining outputs together.
+- The current standard-chromosome filter keeps human autosomes 1–22, X, and Y; mitochondrial and other contigs are excluded.
 - In cell-type mode, cells are clustered with Leiden on the encoder latent (`X_latent`) at `cluster_resolution`; the resulting labels are written to `obs[celltype_key]` and used for marker-gene identification and per-cell-type scoring.
 - During optimization, copied decoder parameters use `decoder_lr` and can be anchored to pretrained values by `decoder_l2_sp_lambda`, while SNV-specific modules keep the main learning rate.
 - The training loss includes a rank term (weight `rank_lambda_max`, margin `rank_margin_max`) that contrasts true SNV–cell pairs against same-batch shuffled negatives, plus a soft penalty (`delta_ratio_cap`, `delta_ratio_lambda`) that bounds the relative latent shift a single SNV can induce.
+
+### Evaluation-only Checkpoint Contract
+
+Set `snv_eff.eval_only: true` and run the same `prismsnv snv_effect` command.
+This skips training and strictly loads the saved SNV model. A missing file,
+legacy bare `state_dict`, unsupported checkpoint version, or incompatible
+metadata raises an error; evaluation never falls back to training.
+
+The current checkpoint format is `prismsnv.snv_perturbation`, version **1**
+(independent of package version 0.1.0). It stores weights together with ordered
+gene and SNV identifiers, the RNA batch key/category mapping, and model
+dimensions. Evaluation aligns RNA genes to the saved gene order and validates
+the remaining feature and batch contract. Keep the post-filter SNV identities
+and order, batch mapping, `latent_dim`, `snv_emb_dim`, and `batch_emb_dim`
+compatible with training. Changing `min_cnt` can change the retained SNVs and
+cause validation to fail.
+
+Evaluation uses metadata in the SNV checkpoint; it does not load a separate
+RNA backbone or infer legacy metadata from `.snvs.npy`. Retrain legacy models
+with the current code. Evaluation preserves the checkpoint and its SNV-list
+sidecars, but regenerates score/plot outputs in `result_folder`, potentially
+overwriting earlier scoring results.
 
 ---
 
@@ -132,6 +161,8 @@ Behavior highlights:
 ## 5. Main Outputs
 
 - `snv_perturbation_model.pt`
+- `snv_perturbation_model.pt.snvs.npy` (ordered model input SNVs; training mode)
+- `snv_perturbation_model.pt.final_snvs.npy` (final scored SNVs; training mode)
 - `top_snv_attention.csv`
 - `snv_perturbation_scores_by_cell.csv`
 - `snv_perturbation_scores.csv` when `cell_type_free=true`
@@ -146,6 +177,11 @@ Behavior highlights:
 
 Output branches by mode:
 
+The historical `top_snv_attention*.csv` filenames are retained, but ranking now
+uses `Latent_Contribution_Score`, not `Attention_Score`. Score tables use
+`score_euclidean` and `score_cosine_distance`, not cosine similarity. See
+{doc}`outputs-and-faq` for the current columns.
+
 - `cell_type_free=true`: produces global `snv_perturbation_scores.csv` and skips clustering/aggregation outputs
 - `cell_type_free=false`: produces cell-type-aware score files, co-occurrence de-duplication audit, per-cell perturbation tables, and UMAP outputs
 
@@ -158,4 +194,4 @@ At minimum, verify:
 1. `snv_perturbation_model.pt` was created
 2. `top_snv_attention.csv` is non-empty
 3. score CSVs contain reasonable SNV/cell counts
-4. visualization outputs were generated successfully
+4. mode-specific outputs were generated; cell-type visualizations are not expected in `cell_type_free: true`

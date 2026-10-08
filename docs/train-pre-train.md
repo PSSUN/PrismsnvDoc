@@ -40,7 +40,7 @@ pre_train:
     beta_max: 3.0
     grad_clip: 5.0
     device: cuda
-    hvg_only: true
+    hvg_only: false
     batch_key: batch
     batch_emb_dim: 16
     lambda_adv: 1.0
@@ -48,6 +48,12 @@ pre_train:
 ```
 
 ### 2.1 Required Fields
+
+The example follows the packaged template. Template values are explicit choices
+and can differ from defaults used when keys are omitted: `hvg_only` is `false`
+in the template but defaults to `true` in the CLI, and `lambda_adv` is `1.0` in
+the template but defaults to `0.0` when omitted. Generate a fresh template with
+`prismsnv get_template` when updating an older configuration.
 
 - `pre_train.align.pretrain_adata`
 - `pre_train.align.finetune_adata`

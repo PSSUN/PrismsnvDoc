@@ -1,6 +1,6 @@
 project = "PrismSNV User Documentation"
 author = "PrismSNV Team"
-release = "1.0.0"
+release = "0.1.0"
 language = "en"
 
 extensions = [

@@ -13,7 +13,6 @@ prismsnv bam2vcf \
   --outer-jobs 6 \
   --inner-threads 4 \
   --reference /path/to/genome.fa \
-  --varscan-jar /path/to/VarScan.jar \
   --rna-edit-bed /path/to/RNA_editing.bed \
   --out-dir ./snv_call_out \
   --bam-files /path/to/sample1.bam /path/to/sample2.bam
@@ -42,7 +41,8 @@ prismsnv snv_effect -y /path/to/train_config.yaml
 - Expected output: `finetune_aligned.h5ad`
 - Expected output: `rna_backbone_pretrained.pt`
 - Expected output: `snv_perturbation_model.pt`
-- Expected output: attention/score CSV files
+- Expected training sidecars: `snv_perturbation_model.pt.snvs.npy` and `snv_perturbation_model.pt.final_snvs.npy`
+- Expected output: latent-contribution/score CSV files (historical `top_snv_attention*.csv` filenames are retained)
 
 ## 3. Common Bottlenecks
 
@@ -52,3 +52,9 @@ prismsnv snv_effect -y /path/to/train_config.yaml
 - Step 2 OOM during scoring: reduce `score_attn_batch` and `score_cell_batch` (they default to `attn_batch` when omitted).
 
 Before running Step 2, confirm that `all_samples_merged_barcode_snv_matrix.h5ad` from preprocessing is available.
+
+If population AF filtering is enabled, select
+`all_samples_merged_barcode_snv_matrix_af_filtered.h5ad` explicitly in
+`snv_eff.adata_snv` to use that filtered result. RNA cell IDs must match the SNV
+matrix's `<sample_name>_<barcode>` IDs. Use fresh preprocessing output
+directories when inputs, parameters, or VarScan/code versions change.

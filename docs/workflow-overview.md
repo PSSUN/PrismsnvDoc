@@ -2,7 +2,11 @@
 
 ## Data Preparation
 
-Only `BAM files` from single-cell RNA-seq read alignment are required to run the full workflow on your own private data. Whenever possible, use full-length sequencing data so that more genomic regions are covered and more SNV information can be obtained.
+The full workflow requires BAM files, a reference FASTA and its `.fai` index,
+an RNA editing BED file, barcode files, and raw RNA AnnData inputs. BAM files
+alone are insufficient: `snv2barcode` uses cell barcode tags and `pre_train`
+requires expression matrices. Align RNA cell IDs with the merged SNV matrix's
+`<sample_name>_<barcode>` IDs. See {doc}`getting-started` for the input checklist.
 
 ## Pipeline Stages (User-Facing 2-Step View)
 
@@ -13,7 +17,7 @@ Only `BAM files` from single-cell RNA-seq read alignment are required to run the
    - `prismsnv snv2barcode`: build per-sample and merged barcode×SNV matrices.
 2. **Step 2: Training**
    - `prismsnv pre_train`: pretrain RNA backbone and prepare aligned finetuning data.
-   - `prismsnv snv_effect`: train SNV perturbation model and export attention/score outputs.
+   - `prismsnv snv_effect`: train SNV perturbation model and export latent-contribution rankings and score outputs.
 
 ## Stage Handoffs (Critical)
 

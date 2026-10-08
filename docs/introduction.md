@@ -42,7 +42,7 @@ PrismSNV uses a three-stage framework: evidence construction → representation 
    - optional adversarial branch for batch-effect attenuation.
 
 3. **SNV perturbation effect estimation (snv-effect)**
-   - `prismsnv snv_effect`: SNV embedding + attention in latent space for conditional perturbation scoring;
+   - `prismsnv snv_effect`: SNV embeddings and independent sigmoid gates in latent space for conditional perturbation scoring;
    - outputs at both cell and cell-type granularity.
 
 ---
@@ -59,7 +59,7 @@ PrismSNV first learns a stable latent representation of cell state from RNA data
 
 ### 3.3 Multi-level interpretability
 
-The framework provides attention-based ranking and effect scores at both cell-level and cell-type-level, enabling direct biological interpretation of candidate SNVs.
+The framework provides latent-contribution ranking and counterfactual effect scores at both cell-level and cell-type-level to prioritize candidate SNVs for biological interpretation.
 
 ### 3.4 Context-aware relative perturbation scoring
 

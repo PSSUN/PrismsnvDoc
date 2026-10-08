@@ -2,6 +2,10 @@
 
 `prismsnv bam2vcf` calls the packaged BAM-to-VCF pipeline from an installed PrismSNV environment. It calls SNVs from BAM files and removes known RNA editing sites in the final filtering step.
 
+It always uses the bundled **VarScan v2.4.6** JAR. The former `--varscan-jar`
+option has been removed and is rejected as an unknown option. Direct invocation
+of `bam2vcf.sh` also locates the bundled JAR relative to the script directory.
+
 ## 1. Command and Arguments
 
 ```bash
@@ -9,7 +13,6 @@ prismsnv bam2vcf \
   --outer-jobs <OUTER_JOBS> \
   --inner-threads <INNER_THREADS> \
   --reference <reference.fa> \
-  --varscan-jar <VarScan.jar> \
   --rna-edit-bed <RNA_editing.bed> \
   --out-dir <output_dir> \
   --bam-files <bam1> [bam2 ...]
@@ -21,8 +24,7 @@ prismsnv bam2vcf \
 |---|---|---|
 | `--outer-jobs` | Number of BAMs processed in parallel (sample-level) | 4 / 6 / 8 |
 | `--inner-threads` | samtools threads per BAM | 2 / 4 / 8 |
-| `--reference` | Reference genome FASTA | `hg38.fa` |
-| `--varscan-jar` | Path to VarScan JAR | `/path/VarScan.jar` |
+| `--reference` | Reference genome FASTA with a readable `.fai` index | `hg38.fa` |
 | `--rna-edit-bed` | Known RNA editing BED file | `RNA_editing.bed` |
 | `--out-dir` | Output directory | `./snv_call_out` |
 | `--bam-files` | One or more BAM files | `sample1.bam sample2.bam` |
@@ -34,13 +36,14 @@ prismsnv bam2vcf \
   --outer-jobs 6 \
   --inner-threads 4 \
   --reference genome.fa \
-  --varscan-jar VarScan.jar \
   --rna-edit-bed RNA_edit.bed \
   --out-dir ./out \
   --bam-files sample1.bam sample2.bam
 ```
 
-The command requires `bash`, `samtools`, `bedtools`, `java`, and `awk` in `PATH`. On Windows, run it in an environment where Bash can access the input files, such as WSL or Git Bash.
+The command requires `bash`, `samtools`, `bedtools`, `java`, and `awk` in `PATH`.
+On Windows, use WSL with PrismSNV and these tools installed in the same Conda
+environment. Bundling the JAR does not remove the Java requirement.
 
 ---
 
@@ -82,12 +85,15 @@ Practical guidance:
 
 Before execution, the script checks:
 
-1. Existence of `reference.fa`, `VarScan.jar`, and `RNA_editing.bed`
-2. Existence of each BAM input
-3. Existence of BAM index (`sample.bam.bai` or `sample.bai`)
-4. Chromosome naming compatibility between FASTA and BED (`chr*` vs non-`chr*`)
+1. Positive integer values for `--outer-jobs` and `--inner-threads`, and required commands in `PATH`.
+2. Existence and readability of the reference FASTA, bundled JAR, BED, and input BAM files, plus a readable `<reference.fa>.fai`.
+3. Readable input BAM indexes: `sample.bam.bai`, `sample.bai`, `sample.bam.csi`, or `sample.csi`. Missing indexes are created with `samtools index`; an existing but unreadable index is reported as an error.
+4. Duplicate BAM basenames that would collide in the output directory, and output directory writability.
 
-If required files are missing, the script exits early.
+Preflight failures abort the pipeline. Preflight can create BAM indexes and the
+output directory, so it is not a read-only dry run. A chromosome naming check
+compares the first FASTA/BED contigs and only emits a warning for `chr*` versus
+non-`chr*` differences; it does not validate all contigs or stop the run.
 
 ---
 
@@ -101,16 +107,23 @@ If required files are missing, the script exits early.
 
 In most workflows, `no_rna_editing.vcf` is used as `samples.<name>.vcf` in the `prismsnv snv2barcode` configuration.
 
+Existing nonempty intermediate/output files are reused without checking input,
+parameter, or VarScan version changes. Use a fresh `--out-dir` when any of these
+change so that stale results are not reused.
+
 ---
 
 ## 6. Common Failure Cases
 
-- Missing `.bai` index for BAM files
-- Mismatched chromosome naming between reference FASTA and RNA editing BED
+- Missing or unreadable reference `.fai`
+- An unreadable BAM index, or failure to create a missing index (for example, a read-only BAM directory)
+- Missing Java or an incomplete installation without the bundled JAR
+- Duplicate BAM basenames from different input directories
+- Mismatched chromosome naming, which can cause RNA editing sites to remain despite a completed run
 
 Recommended troubleshooting order:
 
 1. Confirm command has all required arguments
 2. Confirm all file paths exist
-3. Confirm BAM index presence and naming compatibility
+3. Confirm index readability, indexing permissions, and chromosome naming compatibility
 4. Confirm runtime tools are available: `samtools`, `bedtools`, `java`
