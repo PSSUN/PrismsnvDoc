@@ -49,11 +49,6 @@ After installation, confirm that the package command is available:
 
 ```bash
 prismsnv --help
-prismsnv bam2vcf --help
-prismsnv snv2barcode --help
-prismsnv pre_train --help
-prismsnv snv_effect --help
-prismsnv get_template --help
 ```
 
 ### 1.3 External Tool Sanity Check
