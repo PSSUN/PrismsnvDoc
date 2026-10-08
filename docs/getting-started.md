@@ -7,11 +7,9 @@
 | Component | Recommended Version | Notes |
 |---|---|---|
 | Python | 3.12+ | Required by the current package metadata; examples use 3.12 |
-| Bash | system/Git Bash/WSL | Required by `prismsnv bam2vcf` |
 | samtools | 1.10+ | Used by `prismsnv bam2vcf` for filtering/indexing/mpileup |
 | bedtools | 2.29+ | Used to remove known RNA editing sites |
 | Java | 8+ | Required to run VarScan |
-| awk/gawk | system/gawk | Used by the BAM-to-VCF shell pipeline |
 
 ### 1.2 Python Environment Setup
 
@@ -54,11 +52,9 @@ prismsnv --help
 ### 1.3 External Tool Sanity Check
 
 ```bash
-bash --version
 samtools --version
 bedtools --version
 java -version
-awk --version
 ```
 
 Proceed once these commands return version information.
