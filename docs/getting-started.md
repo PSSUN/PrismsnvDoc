@@ -10,7 +10,6 @@
 | Bash | system/Git Bash/WSL | Required by `prismsnv bam2vcf` |
 | samtools | 1.10+ | Used by `prismsnv bam2vcf` for filtering/indexing/mpileup |
 | bedtools | 2.29+ | Used to remove known RNA editing sites |
-| VarScan | 2.4.6 (bundled) | Located automatically; no separate JAR argument |
 | Java | 8+ | Required to run VarScan |
 | awk/gawk | system/gawk | Used by the BAM-to-VCF shell pipeline |
 
