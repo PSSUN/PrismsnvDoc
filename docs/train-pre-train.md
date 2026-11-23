@@ -64,8 +64,8 @@ the template but defaults to `0.0` when omitted. Generate a fresh template with
 | Parameter | Typical Start | Notes |
 |---|---|---|
 | `latent_dim` | 128 | Latent representation size |
-| `mu_activation` | `umi` | Decoder mean activation; must be one of `umi`, `softplus`, `identity` |
-| `use_nb` | `true` | Recommended for raw UMI count modeling (expects `mu_activation: umi`) |
+| `mu_activation` | `umi` | Decoder mean activation; only `umi` is supported |
+| `use_nb` | `true` | Must be `true`; only negative-binomial reconstruction of raw UMI counts is supported |
 | `batch_size` | 256–1024 | Adjust by memory budget |
 | `kl_warmup_epochs` | 20 | Helps stabilize KL term learning |
 | `beta_max` | 1.0–3.0 | Final KL weight reached after warmup; early-stopping patience activates once reached |
@@ -109,7 +109,7 @@ Alignment QC note:
 Training dynamics note:
 
 - The KL weight ramps linearly from 0 to `beta_max` over `kl_warmup_epochs`; validation-based early stopping only starts once the full `beta_max` is reached.
-- `mu_activation` accepts `umi` (raw UMI counts, recommended with `use_nb: true`), `softplus`, or `identity` (corrected/normalized data). Other values are rejected with a config error.
+- `mu_activation` only accepts `umi` (raw UMI counts), and `use_nb` must be `true`. Other values are rejected with a config error.
 - `disc_hidden_dim` only takes effect when `lambda_adv` > 0 and `batch_key` has more than one level; when omitted it defaults to `latent_dim`.
 
 ---

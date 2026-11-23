@@ -7,7 +7,7 @@ This repository contains the standalone PrismSNV user documentation project buil
 - Shibuya theme
 
 The documentation targets the current PrismSNV 0.1.0 source checkout, reviewed
-on 2026-10-08. Runtime requirements and examples follow the application
+on 2026-11-23. Runtime requirements and examples follow the application
 `pyproject.toml`, CLI parsers, and packaged configuration template. The current
 package requires Python 3.12+ and bundles VarScan v2.4.6.
 

@@ -34,7 +34,6 @@ snv_eff:
   attn_batch: 128
   score_attn_batch: 128
   score_cell_batch: 128
-  seed: 42
   rank_lambda_max: 0.05
   rank_margin_max: 0.05
   decoder_lr: 0.0001
@@ -44,7 +43,6 @@ snv_eff:
   freeze_backbone: true
   celltype_key: cell_cluster
   cluster_resolution: 0.4
-  cell_type_free: false
   eval_only: false
   pair_chunk: 20000
   batch_key: sample
@@ -85,8 +83,7 @@ If present, the score export will try to carry through annotation fields such as
 | `score_attn_batch` | Batch size for per-cell-type latent-contribution ranking during scoring; falls back to `attn_batch` when omitted | Lower if scoring runs out of memory |
 | `score_cell_batch` | Batch size for per-cell counterfactual SNV scoring; falls back to `attn_batch` when omitted | Lower if scoring runs out of memory |
 | `pair_chunk` | Sparse decode chunk size | Lower first when hitting OOM |
-| `cell_type_free` | Skip cell-type-aware scoring | Useful for fast global screening |
-| `cluster_resolution` | Leiden clustering resolution used to group cells into cell types (cell-type mode only) | Raise for more, smaller clusters; lower for fewer, larger clusters |
+| `cluster_resolution` | Leiden clustering resolution used to group cells into cell types | Raise for more, smaller clusters; lower for fewer, larger clusters |
 
 ### 2.3 Training-Control Fields
 
@@ -118,7 +115,7 @@ Additional notes:
 - RNA input is auto-loaded from `result_folder/finetune_aligned.h5ad`.
 - Training auto-detects `result_folder/rna_backbone_pretrained.pt`; when present, its `.genes.npy` sidecar is required to verify RNA feature order. Keep both pretraining outputs together.
 - The current standard-chromosome filter keeps human autosomes 1–22, X, and Y; mitochondrial and other contigs are excluded.
-- In cell-type mode, cells are clustered with Leiden on the encoder latent (`X_latent`) at `cluster_resolution`; the resulting labels are written to `obs[celltype_key]` and used for marker-gene identification and per-cell-type scoring.
+- Cells are clustered with Leiden on the encoder latent (`X_latent`) at `cluster_resolution`; the resulting labels are written to `obs[celltype_key]` and used for marker-gene identification and per-cell-type scoring.
 - During optimization, copied decoder parameters use `decoder_lr` and can be anchored to pretrained values by `decoder_l2_sp_lambda`, while SNV-specific modules keep the main learning rate.
 - The training loss includes a rank term (weight `rank_lambda_max`, margin `rank_margin_max`) that contrasts true SNV–cell pairs against same-batch shuffled negatives, plus a soft penalty (`delta_ratio_cap`, `delta_ratio_lambda`) that bounds the relative latent shift a single SNV can induce.
 
@@ -165,25 +162,19 @@ Behavior highlights:
 - `snv_perturbation_model.pt.final_snvs.npy` (final scored SNVs; training mode)
 - `top_snv_attention.csv`
 - `snv_perturbation_scores_by_cell.csv`
-- `snv_perturbation_scores.csv` when `cell_type_free=true`
-- `top_snv_attention_by_celltype.csv` when `cell_type_free=false`
-- `snv_perturbation_scores_by_celltype.csv` when `cell_type_free=false`
-- `snv_cooccurrence_dedup_removed.csv` when `cell_type_free=false`
-- `cell_cluster_marker_genes_top10.csv` when `cell_type_free=false`
-- `adata_rna_latent_labeled.h5ad` when `cell_type_free=false`
-- `cell_perturbation_scores.csv` when `cell_type_free=false`
-- `cell_perturbation/<celltype>_cell_perturbation.csv` for populated high/low perturbation cell lists when `cell_type_free=false`
-- `cell_perturbation_and_celltype_umap.pdf` when `cell_type_free=false`
-
-Output branches by mode:
+- `top_snv_attention_by_celltype.csv`
+- `snv_perturbation_scores_by_celltype.csv`
+- `snv_cooccurrence_dedup_removed.csv`
+- `cell_cluster_marker_genes_top10.csv`
+- `adata_rna_latent_labeled.h5ad`
+- `cell_perturbation_scores.csv`
+- `cell_perturbation/<celltype>_cell_perturbation.csv` for populated high/low perturbation cell lists
+- `cell_perturbation_and_celltype_umap.pdf`
 
 The historical `top_snv_attention*.csv` filenames are retained, but ranking now
 uses `Latent_Contribution_Score`, not `Attention_Score`. Score tables use
 `score_euclidean` and `score_cosine_distance`, not cosine similarity. See
 {doc}`outputs-and-faq` for the current columns.
-
-- `cell_type_free=true`: produces global `snv_perturbation_scores.csv` and skips clustering/aggregation outputs
-- `cell_type_free=false`: produces cell-type-aware score files, co-occurrence de-duplication audit, per-cell perturbation tables, and UMAP outputs
 
 ---
 
@@ -194,4 +185,4 @@ At minimum, verify:
 1. `snv_perturbation_model.pt` was created
 2. `top_snv_attention.csv` is non-empty
 3. score CSVs contain reasonable SNV/cell counts
-4. mode-specific outputs were generated; cell-type visualizations are not expected in `cell_type_free: true`
+4. cell-type score files and visualizations were generated

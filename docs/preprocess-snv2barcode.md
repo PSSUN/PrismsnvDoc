@@ -161,7 +161,7 @@ sites directly; it bypasses automatic per-ALT union selection.
 
 Additional behavior:
 
-- Loci with pileup depth `> 50000` are skipped.
+- Pileup depth is capped at 8000 reads per site (`PILEUP_MAX_DEPTH`), and reads beyond the cap are ignored.
 - ALT/REF counts support either read-level or UMI-level aggregation.
 - During merge, barcode IDs become `<sample_name>_<barcode>` and `obs["sample"]` stores the sample name. RNA AnnData cell IDs must match these IDs for downstream alignment.
 

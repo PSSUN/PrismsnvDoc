@@ -35,13 +35,12 @@ containing `--varscan-jar` must have that option and its value removed.
 The current PrismSNV package version is `0.1.0`. Python dependencies are pinned
 in its `pyproject.toml` and installed by pip; use the metadata from the same
 checkout instead of combining dependency instructions from older versions.
-The Python requirement above follows that metadata, even if older repository
-README or Conda recipe text still mentions Python 3.10.
+The Python requirement above follows that metadata.
 
-VarScan has separate licensing terms from PrismSNV: the bundled release notes
-describe free non-commercial use by academic, government, and nonprofit
-institutions. Commercial use and redistribution require checking the upstream
-terms; see `src/prismsnv/preprocess/vendor/README.md` in the PrismSNV checkout.
+VarScan has separate licensing terms from PrismSNV. The upstream
+[VarScan project page](https://sourceforge.net/projects/varscan/) lists the
+Non-Profit Open Software License 3.0 and describes VarScan as free for
+non-commercial use. Check those terms before commercial use or redistribution.
 
 After installation, confirm that the package command is available:
 
