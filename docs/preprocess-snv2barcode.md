@@ -127,7 +127,7 @@ If `af_filter_enabled: true`, each sample must also provide:
 ### 4.2 `file_paths.snv_union`
 
 - `auto`: build `SNV_union.tsv` from filtered per-sample VCF files.
-- custom path: use external SNV union file (frequency annotations may be missing).
+- custom path: use external SNV union file (frequency annotations are missing).
 
 The union is a headerless, tab-delimited file with four columns: chromosome,
 1-based position, REF, and a single ALT per row. A custom union defines the

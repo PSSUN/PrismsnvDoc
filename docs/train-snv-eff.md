@@ -91,7 +91,7 @@ If present, the score export will try to carry through annotation fields such as
 |---|---|---|
 | `rank_lambda_max` | Maximum weight of the rank loss contrasting true SNV assignments against same-batch shuffled negatives; the weight ramps up with training progress | Keep small (0–0.1); set 0 to disable |
 | `rank_margin_max` | Maximum margin enforced between true-pair loss and shuffled-negative loss | Keep small (0–0.1) |
-| `decoder_lr` | Learning rate for the copied RNA decoder parameters; SNV-specific modules keep the main `1e-3` learning rate | Typical 1e-4 |
+| `decoder_lr` | Learning rate for the RNA decoder parameters; SNV-specific modules keep the main `1e-3` learning rate | Typical 1e-4 |
 | `decoder_l2_sp_lambda` | L2-SP weight anchoring copied decoder parameters to their pretrained values | 0 disables anchoring |
 | `delta_ratio_cap` | Per-cell soft cap on the latent perturbation magnitude `||delta_z|| / ||z||` | Typical 0.8 |
 | `delta_ratio_lambda` | Weight of the squared soft penalty applied above `delta_ratio_cap` | 0 disables the penalty |

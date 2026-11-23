@@ -124,7 +124,7 @@ Training dynamics note:
 Additional notes:
 
 - If `hvg_only=true` and `highly_variable` exists, training uses HVGs only.
-- If `batch_key` exists with >1 levels, batch embedding and adversarial removal can be enabled.
+- If `batch_key` exists, batch embedding is enabled. With >1 levels, adversarial removal can be enabled too.
 - Learning rate uses warmup + cosine schedule; early stopping is based on validation loss.
 
 ---
